@@ -1,0 +1,47 @@
+Edit the following script and change what's needed before running:
+
+scripts/docker_initialize_instance.sh
+
+edit config.yml and change what you like
+
+example: storage-wal-fsync-delay: 0s  # raise this to 14s for less durability in exchange for much less I/O
+
+Then start the instance for good:
+
+docker run whatever_you_named_it
+
+Note that the configuration file /etc/influxdb/influxdb.conf is empty in the container.
+
+Next, the action moves to the command line tool:
+
+$ influx setup
+call the admin user 'admin'
+admin pw is the Mark6 oper pw
+org is 'eht_prod' or 'eht_test'
+
+Next: bucket, users, tokens XXX check out if we can use a template for this
+
+$ influx bucket create vlbimon_test  # or _prod
+
+$ influx user create --name oper  # user that will insert data
+$ influx user password --name oper  # mark6
+
+$ influx user create --name dashuser  # user with read access to data and dashboards
+$ influx user password --name dashuser
+
+$ influx user create --name dashadmin  # user with read access to data, and can create dashboards
+$ influx user password --name dashadmin
+
+The following tokens should be kept secret, i.e. add them to local
+.ini files, and do not check them into a repo:
+
+$ influx bucket list  # to see the bucket id
+
+$ influx auth create --org eht_test -u admin --all-access
+$ influx auth create --org eht_test -u oper --write-dashboards --write-bucket --read-bucket <bucket-id>
+$ influx auth create --org eht_test -u dashuser --read-dashboards --read-bucket <bucket-id>
+$ influx auth create --org eht_test -u dashadmin --write-dashboards --read-bucket <bucket-id>
+
+Consider whether you want to open port 8086 or 8087 and to whom
+
+Finally, add the information about this instance to our EHT Cloud Secrets.

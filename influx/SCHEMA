@@ -1,0 +1,21 @@
+https://www.influxdata.com/blog/data-layout-and-schema-design-best-practices-for-influxdb/
+
+Encode metadata in tags, which are indexed. Make sure there aren't too
+many values for this metadata, i.e. "stations" being a station name is
+OK (11 possible values), but don't put a time there.
+
+Field values are not indexed.
+
+To say this another way,
+
+Index cardinality = buckets x measurements x (unique tag key,value pairs) x field keys
+
+vlbimon schema:
+
+2 bucket names, vlbimon_test and vlbimon_prod
+
+The "measurement" acts like a db table name. Fields are like database
+columns. The timestemp is a row.
+
+Vlbimon timestamps are set to precision of 1 second, to save storage.
+

@@ -1,10 +1,23 @@
+These instructions assume that you want to run the official Docker
+image and install the cli using apt.
+
+Add the new apt repo:
+
+wget -qO- https://repos.influxdata.com/influxdb.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/influxdb.gpg > /dev/null
+export DISTRIB_ID=$(lsb_release -si); export DISTRIB_CODENAME=$(lsb_release -sc)
+echo "deb [signed-by=/etc/apt/trusted.gpg.d/influxdb.gpg] https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list > /dev/null
+
+Install the cli:
+
+apt-get udpate && apt install influxdb2-cli
+
 Edit the following script and change what's needed before running:
 
 scripts/docker_initialize_instance.sh
 
-edit config.yml and change what you like
+edit config.yml and change what you like, for example:
 
-example: storage-wal-fsync-delay: 0s  # raise this to 14s for less durability in exchange for much less I/O
+storage-wal-fsync-delay: 0s  # raise this to 14s for less durability in exchange for much less I/O
 
 Then start the instance for good:
 
@@ -12,16 +25,28 @@ docker run whatever_you_named_it
 
 Note that the configuration file /etc/influxdb/influxdb.conf is empty in the container.
 
-Next, the action moves to the command line tool:
+Next, the action moves to the command line tool.
 
-$ influx setup
+INFLUX_CONFIGS_PATH
+At this point you may be surprised that influxdb stores information
+about all of your databases in ~/.influxdbv2/configs -- so if you have
+created and deleted some databases in the past, you'll need to update
+that file.
+
+[default]
+  url = "http://localhost:8086"
+  token = "90D0Yo5CIJp9U5fVnwZDbjsEIBF3j7BOWe04RV1Emw_dPROngCDmEn-pRJeUvkuLl5HD4sg98PpKDQAZL0DK_g=="
+  org = "eht"
+  active = true
+
+
+$ influx setup --name whatever_you_named_it -- host foo:port
 call the admin user 'admin'
 admin pw is the Mark6 oper pw
 org is 'eht_prod' or 'eht_test'
+bucket is 'vlbimon_prod' or 'vlbimon_test'
 
-Next: bucket, users, tokens XXX check out if we can use a template for this
-
-$ influx bucket create vlbimon_test  # or _prod
+Next: users, tokens XXX check out if we can use a template for this
 
 $ influx user create --name oper  # user that will insert data
 $ influx user password --name oper  # mark6
@@ -42,6 +67,10 @@ $ influx auth create --org eht_test -u oper --write-dashboards --write-bucket --
 $ influx auth create --org eht_test -u dashuser --read-dashboards --read-bucket <bucket-id>
 $ influx auth create --org eht_test -u dashadmin --write-dashboards --read-bucket <bucket-id>
 
-Consider whether you want to open port 8086 or 8087 and to whom
+Consider whether you want to open the firewall for port 8086 or 8087, and to whom
+
+XXX FIREWALL HOLE EXAMPLE
+XXX firewall-cmd  # redhat
+XXX ufw  # Ubuntu 20.4
 
 Finally, add the information about this instance to our EHT Cloud Secrets.
